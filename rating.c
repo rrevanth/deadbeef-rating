@@ -58,12 +58,18 @@ rating_action_rate_helper (DB_plugin_action_t *action, int ctx, int rating)
     int count = 0;
     while (it) {
         if (deadbeef->pl_is_selected (it) || ctx == DDB_ACTION_CTX_NOWPLAYING) {
+            deadbeef->pl_lock ();
             if (rating == -1) {
                 deadbeef->pl_delete_meta(it, "rating");
             } else {
                 deadbeef->pl_set_meta_int(it, "rating", rating);
             }
-            deadbeef->pl_lock ();
+            
+            ddb_event_track_t *ev = (ddb_event_track_t *)deadbeef->event_alloc(DB_EV_TRACKINFOCHANGED);
+            ev->track = it;
+            deadbeef->pl_item_ref(ev->track);
+            deadbeef->event_send((ddb_event_t *)ev, 0, 0);
+
             const char *dec = deadbeef->pl_find_meta_raw (it, ":DECODER");
             char decoder_id[100];
             if (dec) {
@@ -103,6 +109,7 @@ rating_action_rate_helper (DB_plugin_action_t *action, int ctx, int rating)
 
 out:
     if (it) {
+        deadbeef->sendmessage(DB_EV_PLAYLISTCHANGED, 0, 0, 0);
         deadbeef->pl_item_unref (it);
     }
     return 0;
