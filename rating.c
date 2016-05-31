@@ -1,4 +1,4 @@
-#include <deadbeef.h>
+#include <deadbeef/deadbeef.h>
 #include <string.h>
 #include <stdlib.h>
 
